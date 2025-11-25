@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils";
 interface VoiceInterfaceProps {
   isSpeaking: boolean;
   setIsSpeaking: (speaking: boolean) => void;
+  onVoiceInput: (text: string) => void;
 }
 
-const VoiceInterface = ({ isSpeaking, setIsSpeaking }: VoiceInterfaceProps) => {
+const VoiceInterface = ({ isSpeaking, setIsSpeaking, onVoiceInput }: VoiceInterfaceProps) => {
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
   const { toast } = useToast();
@@ -25,15 +26,14 @@ const VoiceInterface = ({ isSpeaking, setIsSpeaking }: VoiceInterfaceProps) => {
       recognitionInstance.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         console.log("Speech recognized:", transcript);
-        // Send transcript to chat
-        const inputElement = document.querySelector("input[placeholder='Ask me anything...']") as HTMLInputElement;
-        if (inputElement) {
-          inputElement.value = transcript;
-          inputElement.dispatchEvent(new Event("input", { bubbles: true }));
-          // Trigger send button
-          const sendButton = inputElement.nextElementSibling as HTMLButtonElement;
-          sendButton?.click();
-        }
+        
+        // Pass the recognized text to the parent component
+        onVoiceInput(transcript);
+        
+        toast({
+          title: "Voice recognized",
+          description: transcript,
+        });
       };
 
       recognitionInstance.onerror = (event: any) => {

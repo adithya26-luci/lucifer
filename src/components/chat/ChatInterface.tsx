@@ -16,9 +16,10 @@ interface Message {
 interface ChatInterfaceProps {
   isSpeaking: boolean;
   setIsSpeaking: (speaking: boolean) => void;
+  voiceInput?: string;
 }
 
-const ChatInterface = ({ isSpeaking, setIsSpeaking }: ChatInterfaceProps) => {
+const ChatInterface = ({ isSpeaking, setIsSpeaking, voiceInput }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -38,6 +39,17 @@ const ChatInterface = ({ isSpeaking, setIsSpeaking }: ChatInterfaceProps) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Handle voice input
+  useEffect(() => {
+    if (voiceInput) {
+      setInput(voiceInput);
+      // Auto-send after a brief delay
+      setTimeout(() => {
+        handleSend();
+      }, 300);
+    }
+  }, [voiceInput]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
