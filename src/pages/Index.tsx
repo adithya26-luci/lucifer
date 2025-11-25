@@ -5,7 +5,14 @@ import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceInput, setVoiceInput] = useState<string>("");
   const { toast } = useToast();
+
+  const handleVoiceInput = (text: string) => {
+    setVoiceInput(text);
+    // Reset after processing
+    setTimeout(() => setVoiceInput(""), 100);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-dark-red/10 relative overflow-hidden">
@@ -26,10 +33,18 @@ const Index = () => {
         </div>
 
         {/* Chat Interface */}
-        <ChatInterface isSpeaking={isSpeaking} setIsSpeaking={setIsSpeaking} />
+        <ChatInterface 
+          isSpeaking={isSpeaking} 
+          setIsSpeaking={setIsSpeaking} 
+          voiceInput={voiceInput}
+        />
 
         {/* Voice Interface */}
-        <VoiceInterface isSpeaking={isSpeaking} setIsSpeaking={setIsSpeaking} />
+        <VoiceInterface 
+          isSpeaking={isSpeaking} 
+          setIsSpeaking={setIsSpeaking}
+          onVoiceInput={handleVoiceInput}
+        />
       </div>
     </div>
   );
