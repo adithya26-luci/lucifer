@@ -42,14 +42,56 @@ const ChatInterface = ({ isSpeaking, setIsSpeaking, voiceInput }: ChatInterfaceP
 
   // Handle voice input
   useEffect(() => {
-    if (voiceInput) {
-      setInput(voiceInput);
-      // Auto-send after a brief delay
-      setTimeout(() => {
-        handleSend();
-      }, 300);
+    if (voiceInput && voiceInput.trim()) {
+      const sendVoiceMessage = async () => {
+        const userMessage: Message = {
+          role: "user",
+          content: voiceInput,
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, userMessage]);
+        setIsLoading(true);
+
+        try {
+          const { data, error } = await supabase.functions.invoke("chat", {
+            body: { message: voiceInput },
+          });
+
+          if (error) throw error;
+
+          const assistantMessage: Message = {
+            role: "assistant",
+            content: data.response,
+            timestamp: new Date(),
+          };
+
+          setMessages((prev) => [...prev, assistantMessage]);
+
+          // Speak the response if TTS is available
+          if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(data.response);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.onstart = () => setIsSpeaking(true);
+            utterance.onend = () => setIsSpeaking(false);
+            window.speechSynthesis.speak(utterance);
+          }
+        } catch (error) {
+          console.error("Chat error:", error);
+          toast({
+            title: "Error",
+            description: "Failed to send voice message. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      sendVoiceMessage();
     }
-  }, [voiceInput]);
+  }, [voiceInput, setIsSpeaking, toast]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
