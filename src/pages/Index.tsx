@@ -1,12 +1,19 @@
 import { useState } from "react";
 import ChatInterface from "@/components/chat/ChatInterface";
 import VoiceInterface from "@/components/voice/VoiceInterface";
-import { useToast } from "@/hooks/use-toast";
+import ReminderPanel from "@/components/reminders/ReminderPanel";
+import { useReminders } from "@/hooks/useReminders";
 
 const Index = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceInput, setVoiceInput] = useState<string>("");
-  const { toast } = useToast();
+  const { reminders, status, addReminder, deleteReminder } = useReminders({
+    onDue: (reminder) => {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Reminder: ${reminder.text}`));
+      }
+    },
+  });
 
   const handleVoiceInput = (text: string) => {
     setVoiceInput(text);
@@ -37,7 +44,11 @@ const Index = () => {
           isSpeaking={isSpeaking} 
           setIsSpeaking={setIsSpeaking} 
           voiceInput={voiceInput}
+          onReminder={addReminder}
         />
+
+        {/* Reminders */}
+        <ReminderPanel reminders={reminders} status={status} onAdd={addReminder} onDelete={deleteReminder} />
 
         {/* Voice Interface */}
         <VoiceInterface 

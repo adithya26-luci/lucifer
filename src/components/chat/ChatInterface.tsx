@@ -6,6 +6,14 @@ import { Send, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ChatMessage from "./ChatMessage";
+import type { NewReminder } from "@/lib/reminders";
+
+// Send the browser's clock and time zone so the assistant answers time questions
+// and resolves relative reminder times in the user's own zone.
+const clientContext = () => ({
+  now: new Date().toISOString(),
+  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+});
 
 interface Message {
   role: "user" | "assistant";
@@ -17,9 +25,10 @@ interface ChatInterfaceProps {
   isSpeaking: boolean;
   setIsSpeaking: (speaking: boolean) => void;
   voiceInput?: string;
+  onReminder?: (reminder: NewReminder) => Promise<boolean>;
 }
 
-const ChatInterface = ({ isSpeaking, setIsSpeaking, voiceInput }: ChatInterfaceProps) => {
+const ChatInterface = ({ isSpeaking, setIsSpeaking, voiceInput, onReminder }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -55,7 +64,7 @@ const ChatInterface = ({ isSpeaking, setIsSpeaking, voiceInput }: ChatInterfaceP
 
         try {
           const { data, error } = await supabase.functions.invoke("chat", {
-            body: { message: voiceInput },
+            body: { message: voiceInput, ...clientContext() },
           });
 
           if (error) throw error;
@@ -67,6 +76,7 @@ const ChatInterface = ({ isSpeaking, setIsSpeaking, voiceInput }: ChatInterfaceP
           };
 
           setMessages((prev) => [...prev, assistantMessage]);
+          if (data.reminder && onReminder) await onReminder(data.reminder);
 
           // Speak the response if TTS is available
           if ('speechSynthesis' in window) {
@@ -91,7 +101,7 @@ const ChatInterface = ({ isSpeaking, setIsSpeaking, voiceInput }: ChatInterfaceP
 
       sendVoiceMessage();
     }
-  }, [voiceInput, setIsSpeaking, toast]);
+  }, [voiceInput, setIsSpeaking, toast, onReminder]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -108,7 +118,7 @@ const ChatInterface = ({ isSpeaking, setIsSpeaking, voiceInput }: ChatInterfaceP
 
     try {
       const { data, error } = await supabase.functions.invoke("chat", {
-        body: { message: input },
+        body: { message: input, ...clientContext() },
       });
 
       if (error) throw error;
@@ -120,6 +130,7 @@ const ChatInterface = ({ isSpeaking, setIsSpeaking, voiceInput }: ChatInterfaceP
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      if (data.reminder && onReminder) await onReminder(data.reminder);
 
       // Speak the response if TTS is available
       if ('speechSynthesis' in window) {
@@ -150,7 +161,7 @@ const ChatInterface = ({ isSpeaking, setIsSpeaking, voiceInput }: ChatInterfaceP
   };
 
   return (
-    <Card className="backdrop-blur-xl bg-card/60 border-border/50 shadow-elevated p-6 mb-24">
+    <Card className="backdrop-blur-xl bg-card/60 border-border/50 shadow-elevated p-6 mb-6">
       {/* Messages */}
       <div className="space-y-4 mb-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
         {messages.map((message, index) => (

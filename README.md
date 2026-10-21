@@ -7,7 +7,8 @@ An intelligent AI personal assistant built with modern web technologies.
 ## ✨ Features
 
 - Natural language processing
-- Task management
+- Voice input and spoken replies (Web Speech API)
+- Reminders: ask in chat ("remind me to call mom at 6pm") or add them in the Reminders panel; saved per user in Supabase and announced when due while the app is open
 - Real-time responses
 - Modern, responsive UI
 - Dark/light mode support
@@ -54,6 +55,9 @@ An intelligent AI personal assistant built with modern web technologies.
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
+
+3. In your Supabase project, enable **Authentication > Sign In / Providers > Allow anonymous sign-ins** (reminders are stored per anonymous user), and apply the migration in `supabase/migrations`.
+4. Set `LOVABLE_API_KEY` as a secret for the `chat` edge function and deploy it.
 
 ## 📦 Available Scripts
 
